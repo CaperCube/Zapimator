@@ -1,0 +1,194 @@
+<!--                                                              
+////////////////////////////////////////////////////////
+////                     Head HTML                  ////
+////////////////////////////////////////////////////////
+-->
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" charset="utf-8">
+    <title>Zapimator v0.67</title>
+    <meta name="author" content="Eric Kalpin">
+    <link rel='icon' type='image/png' href='img/ui/Logo.svg'>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="top_side">
+        <div id="corner_box">
+            <div id="logo_box">
+                <canvas id="logo_canvas"></canvas>
+                <div id="logo_overlay"></div>
+                <div id="logo_top"></div>
+                <div id="logo_bottom"></div>
+                <div id="logo_cover"></div>
+            </div>
+        </div>
+        
+        <div id="time_line">
+            <button id="play_button" onclick="animateToggle()" title="Play / Pause"><img id="play_img"></button>
+            <button id="loop_button" onclick="loopToggle()" title="Loop"><img id="loop_img"></button><button id="clickrecord_button" onclick="clickRecordToggle()" title="Record on click"><img id="clickrecord_img"></button><button id="paint_button" onclick="paintToggle()" title="Paint mode"><img id="paint_img"></button><button id="erase_button" onclick="eraseToggle()" title="Erase mode"><img id="erase_img"></button><input type="color" id="color_pick" value="#000000" title="Brush color" onchange="paintColor = this.value; recolorCustomBrush(customBrushImage);"> Size: <input id="brush_slider" type="range" min="1" max="100" step="1" value="10" onchange="brushSize = this.value">
+            <br>
+            <button id="DOM_stepbackbutton" onclick="frameStep(-1)" title="Back one frame"><img id="backframe_img"></button><button id="DOM_stepforwardbutton" onclick="frameStep(1)" title="Forward one frame"><img id="nextframe_img"></button> Frame: <span id="DOM_frameReadout">0</span><!--<button onclick="softBrushMode = !softBrushMode; this.innerHTML = 'Soft ' + softBrushMode">Soft false</button>--><br>
+            <input type="range" value="0" min="0" max="120" id="slider_input" onchange="updateLayerProps(listSelectedLayerID)">
+        </div>
+    </div>
+    
+    <div id="left_side">
+        <!-- file browser -->
+        <input id="DOM_imageLoader" type="file" style="display: none">
+        <!--<button onclick="duplicateLayer(layer[listSelectedLayerID])" id="duplicatelayer_button" title="Duplicate layer"><img id="duplicatelayer_img"></button> -->
+        <button onclick="notyet('duplicate the selected layer without destrying your project')" id="duplicatelayer_button" title="Duplicate layer"><img id="duplicatelayer_img"></button><button onclick="deleteLayer(listSelectedLayerID)" id="removelayer_button"><img id="removelayer_img" title="Delete layer" title="Remove layer"></button><br>
+        <button onclick="AddBlankLayer()" id="addblanklayer_button" title="Add blank layer"><img id="addblanklayer_img"></button>
+        <button onclick="document.getElementById('DOM_imageLoader').click();" id="addlayer_button" title="Add image layer"><img id="addlayer_img"></button><br>
+        <!-- <button onclick="renameLayer(listSelectedLayerID)" id="renamelayer_button">Rename Layer</button><br> -->
+        <!-- Move Layers buttons -->
+        <button onclick="moveLayer(1)" id="layerup_button" title="Move layer up"><img id="movelayerup_img"></button><br>
+        <!-- Layer List -->
+        <select id="DOM_layers" size="14" onchange="selectLayer()">
+            <!-- <option value="null">null</option> -->
+        </select><br>
+        <!-- Move Layers buttons -->
+        <button onclick="moveLayer(-1)" id="layerdown_button" title="Move layer down"><img id="movelayerdown_img"></button><br>
+        <button id="DOM_lockbutton" onclick="lockLayerToggle(listSelectedLayerID)" title="Lock / Unlock selected layer"><img id="layerlock_img"></button><button id="DOM_hidebutton" onclick="hideLayerToggle(listSelectedLayerID)" title="Hide / Show selected layer"><img id="layerhide_img"></button>
+    </div>
+    
+    <canvas id="hidden_canvas" style="display: none;"></canvas>
+    <canvas id="my_canvas"></canvas>
+    
+    <div id="right_side">
+        <button id="layerposition_button" title="Toggle position animation" onclick="toggleLayerPosAnim(listSelectedLayerID)"><img id="layerposition_img"></button>
+        X: <input id="DOM_layerposx" type="number" value="0" onchange="changeLayerPosition(listSelectedLayerID, 'X', this.value)" readonly>
+        Y: <input id="DOM_layerposy" type="number" value="0" onchange="changeLayerPosition(listSelectedLayerID, 'Y', this.value)" readonly><br>
+        <button id="layerscale_button" title="Toggle scale animation" onclick="toggleLayerScaleAnim(listSelectedLayerID)"><img id="layerscale_img"></button>
+        <!--
+        X: <input id="DOM_layerscalex" type="number" value="1" step="0.01" onchange="changeLayerScale(listSelectedLayerID, 'X', this.value)">
+        Y: <input id="DOM_layerscaley" type="number" value="1" step="0.01" onchange="changeLayerScale(listSelectedLayerID, 'Y', this.value)"><br> -->
+        X: <input id="DOM_layerscalex" type="range" min="0" max="4" value="1" step="0.01" oninput="changeLayerScale(listSelectedLayerID, 'X', this.value)">
+        Y: <input id="DOM_layerscaley" type="range" min="0" max="4" value="1" step="0.01" oninput="changeLayerScale(listSelectedLayerID, 'Y', this.value)"><br>
+        <button id="layerrotation_button" title="Toggle rotation animation" onclick="toggleLayerRotAnim(listSelectedLayerID)"><img id="layerrotation_img"></button>
+        <!-- <input id="DOM_layerrotation" type="number" value="0" min="0" max="360" onchange="changeLayerRotation(listSelectedLayerID, this.value)"><br> -->
+        <input id="DOM_layerrotation" type="range" value="0" min="-360" max="360" oninput="changeLayerRotation(listSelectedLayerID, this.value)"><br>
+        <button id="layeropacity_button" title="Toggle opacity animation" onclick="toggleLayerOpacityAnim(listSelectedLayerID)"><img id="layeropacity_img"></button><button onclick="changeLayerOpacity(listSelectedLayerID, 0)">▼</button><button onclick="changeLayerOpacity(listSelectedLayerID, 1)">▲</button>
+        <input id="DOM_layeropacity" type="range" value="1" min="0" max="1" step="0.01" oninput="changeLayerOpacity(listSelectedLayerID, this.value)" onmousedown="opacitySliderGrabbed = true;"><br>
+        <select name="blendingMode" id="DOM_blendMode" onchange="ChangeBlendingMode(this.value);">
+            <option value="normal">Normal</option>
+            <option value="multiply">Multiply</option>
+            <option value="screen">Screen</option>
+            <option value="overlay">Overlay</option>
+            <option value="darken">Darken</option>
+            <option value="lighten">Lighten</option>
+            <option value="darken">Darken</option>
+            <option value="color-dodge">Color-dodge</option>
+            <option value="color-burn">Color-burn</option>
+            <option value="hard-light">Hard-light</option>
+            <option value="soft-light">Soft-light</option>
+            <option value="difference">Difference</option>
+            <option value="exclusion">Exclusion</option>
+            <option value="hue">Hue</option>
+            <option value="saturation">Saturation</option>
+            <option value="color">Color</option>
+            <option value="luminosity">Luminosity</option>
+        </select><br>
+        Frames: <input type="number" id="DOM_frameCount" value="120" min="1" max="3600" onchange="changeFrameCount($('#DOM_frameCount').value)"><br>
+        FPS: <input type="number" id="DOM_frameRate" value="30" min="1" max="60" onchange="frameRate = this.value;"><br>
+        <!--Brush Opacity: <input type="range" id="opac_pick" min="0" max="1" step="0.001" value="1" title="Brush opacity" onchange="brushOpacity = this.value;"><br>-->
+        <button id="DOM_changelogbutton" onclick="if ($('#DOM_changelog').style.display == 'none') $('#DOM_changelog').style.display = 'inline-block'; else $('#DOM_changelog').style.display = 'none';" title="Toggle change log">Change Log</button><br>
+        <span id="DOM_changelog" style="display: none;">
+            <b>v0.67</b><br>
+            ~ Added to github<br>
+            <br>
+            <b>v0.66</b><br>
+            + Added Min/Max opacity buttons<br>
+            + Added default empty layer on start<br>
+            + Added pressure sensitivity<br>
+            + Started working on custom brush-mode (need to draw based on a set distance)<br>
+            + Started working on brush opacity<br>
+            ~ Fixed animation occlusion of other layers when new layer is being recorded bug<br>
+            ~ Fixed bed that saved relative image references when saving project
+            ~ Changed "Remove layer" text to "Delete layer"<br>
+            <br>
+            <b>v0.65</b><br>
+            + Started work on undo/redo (ctrl + z) function<br>
+            + Started work on basic tablet support<br>
+            + Duplicate Layer function<br>
+            + Save/load functions<br>
+            <br>
+            <b>v0.64</b><br>
+            ~ Fixed color sample issue<br>
+            + Added brush / eraser size preview<br>
+            + Added shortcut keys for frame skipping (, and . also using shift will skip to first and last) and play / pause (p toggles playback)<br>
+            + Added Background color option (alt samples color for BG when not in paint or erase mode)<br>
+            <br>
+            <b>v0.6</b><br>
+            + Create empty layer button<br>
+            + Brush tool<br>
+            + Brush color button<br>
+            + Brush size slider<br>
+            + <a href="img/aZSaorY[^tYYv^LbOd.txt" target="_blank">Eraser </a> tool<br>
+            + Framerate adjustment<br>
+            + Sample color at mouse pos (alt)<br>
+            <br>
+            <b>v0.5</b><br>
+            ~ New layers now are placed at 0,0 instead of 100, 100<br>
+            ~ UI has had much tlc<br>
+            + Added animatable scale<br>
+            + Added animatable rotation<br>
+            + Added animatable opacity<br>
+            + Added click-to-record option<br>
+            + Added animation toggles<br>
+            + Added tool tips<br>
+            <br>
+            <b>v0.4</b><br>
+            + Layer locking<br>
+            + Delete layer<br>
+            + Clear layer animation<br>
+            + Frame step<br>
+            + Loop toggle<br>
+            + Custom animation length<br>
+            + Change log<br>
+            ~ Fixed issue (not able to load the same image twice in a row)<br>
+            ~ Fixed issue (Render progress bar max value not updating)<br>
+            <br>
+            <b>v0.3</b><br>
+            + Loading images (adding layers)<br>
+            + Layers<br>
+            + Layer ordering<br>
+            + Basic UI orginization<br>
+            <br>
+            <b>v0.2</b><br>
+            + Render to webM<br>
+            <br>
+            <b>v0.1</b><br>
+            + Mouse motion recording<br>
+            + Playback / looping<br>
+        </span>
+    </div>
+    
+    <div id="bottom_side">
+        <button id="debug_button" onclick="debugToggle()" title="Toggle debug view">Debug</button>Background Color: <input type="color" id="bgcolor_pick" value="#ffffff" title="Background color" onchange="changeBGColor(this.value);"><br>
+        <!-- File Browser -->
+        <button onclick="SaveProject()">Save</button><button onclick="LoadProject()">Load</button>
+        <input onchange="onLoadProject()" id="projectLoader" type="file" name="name" style="display: none;" />
+        
+        <button id="render_button" onclick="startSave()" title="Export animation">Render</button>
+        <progress id="progress" value="0" max="120" min="0" style="width: 300px"></progress> <button id="clearrender_button" onclick="clearRenderedVideo()">Delete Render</button><br>
+        <video id="rendered_video" width="150" height="150" controls="" autoplay="" loop="" src="" style="display: none" title="Clear the rendered video"></video>
+    </div>
+<!--
+////////////////////////////////////////////////////////
+////                     Scripts                    ////
+////////////////////////////////////////////////////////
+-->
+    <!-- distributed -->
+    <script src="js/dist/whammy.js"></script>
+    <!-- Mine -->
+    <script>
+        $ = (n) => document.querySelector(n);
+        $$ = (n) => document.querySelectorAll(n);
+    </script>
+    <script src="js/color.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/brush.js"></script>
+    <script src="js/objects.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/saveload.js"></script>
+</body>
